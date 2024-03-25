@@ -2,8 +2,14 @@
   description = "Kernel development environments";
 
   inputs = {
+    systems.url = "github:nix-systems/default-linux";
+
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.systems.follows = "systems";
+    };
 
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
@@ -17,7 +23,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, rust-overlay, fenix, flake-utils }:
+  outputs = { self, nixpkgs, rust-overlay, fenix, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages."${system}";
