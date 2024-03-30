@@ -28,7 +28,11 @@
       let
         pkgs = nixpkgs.legacyPackages."${system}";
 
-        linuxCommonDependencies = with pkgs; [
+        kernelDevTools = pkgs.callPackage ./tools.nix {};
+
+        linuxCommonDependencies = [
+          kernelDevTools
+        ] ++ (with pkgs; [
           gnumake
           perl
           bison
@@ -49,13 +53,15 @@
           kmod
           ubootTools
 
-          llvmPackages.bintools
-          llvmPackages.clang
-          llvmPackages.llvm
-
           # For make menuconfig
           ncurses
-        ];
+
+          # For make gtags
+          global
+
+          # For git send-email 🫠
+          gitFull
+        ]);
 
         rust-analyzer = fenix.packages."${system}".rust-analyzer;
 
@@ -86,6 +92,10 @@
 
         devShells.linux_6_8 = pkgs.mkShell {
           packages = [
+            pkgs.llvmPackages.bintools
+            pkgs.llvmPackages.llvm
+            pkgs.llvmPackages.clang
+
             rustc_1_76
             rust-bindgen_0_65_1
             rust-analyzer
@@ -94,6 +104,16 @@
           # To force LLVM build mode. This should create less problems
           # with Rust interop.
           LLVM = "1";
+
+          # Disable all automatically applied hardening. The Linux
+          # kernel will take care of itself.
+          NIX_HARDENING_ENABLE = "";
+        };
+
+        devShells.linux_6_8_gcc = pkgs.mkShell {
+          packages = [
+            pkgs.gcc
+          ] ++ linuxCommonDependencies;
 
           # Disable all automatically applied hardening. The Linux
           # kernel will take care of itself.

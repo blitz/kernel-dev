@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -eu
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 output-directory" 1>&2
+    echo
+    echo "Check out a Linux development tree and populates it with typical remotes."
+    exit 1
+fi
+
+OUTDIR=$1
+
+if [ -e "$OUTDIR" ]; then
+    echo "$OUTDIR already exists. Bailing out." 1>&2
+    exit 1
+fi
+
+mkdir -p "$OUTDIR"
+
+pushd "$OUTDIR"
+
+git init --initial-branch=torvalds
+
+git remote add torvalds https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+git remote add stable https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+git remote add rust-for-linux https://github.com/Rust-for-Linux/linux.git
+git remote add kvm https://git.kernel.org/pub/scm/virt/kvm/kvm.git
+# Add new remotes here.
+
+echo "Fetching all remotes. This will take a while."
+git fetch --all
+
+git merge --ff-only torvalds/master
+
+# Reduces the size of the repo a lot.
+git gc --aggressive --prune=now
+
+popd
