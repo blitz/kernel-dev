@@ -1,0 +1,17 @@
+name: "Test"
+on:
+  pull_request:
+  push:
+jobs:
+  linux_6_8:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v25
+    - uses: cachix/cachix-action@v14
+      with:
+        name: blitz
+    - run: git clone --depth 1 --branch v6.8 https://github.com/gregkh/linux.git 
+    - run: nix develop .#linux_6_8 --command bash -c "cd linux && make rustavailable && make defconfig && make -j$(nproc) bzImage"
+    - run: git -C linux clean -fdx
+    - run: nix develop .#linux_6_8_gcc --command bash -c "cd linux && make defconfig && make -j$(nproc) bzImage"
