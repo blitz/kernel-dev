@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
 jobs:
-  linux_6_8:
+  linux_build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -11,7 +11,17 @@ jobs:
     - uses: cachix/cachix-action@v14
       with:
         name: blitz
-    - run: git clone --depth 1 --branch v6.8 https://github.com/gregkh/linux.git 
-    - run: nix develop .#linux_6_8 --command bash -c "cd linux && make rustavailable && make defconfig && make -j$(nproc) bzImage"
-    - run: git -C linux clean -fdx
-    - run: nix develop .#linux_6_8_gcc --command bash -c "cd linux && make defconfig && make -j$(nproc) bzImage"
+    - name: Checkout Linux
+      run: |
+        git clone --depth 1 --branch ${{ matrix.version.tag }} https://github.com/gregkh/linux.git
+    - name: Check Devshell
+      run: |
+        nix develop .#${{ matrix.version.attribute }} --command bash -c "cd linux && make rustavailable && make defconfig && make -j$(nproc) bzImage"
+        git -C linux clean -fdx
+        nix develop .#${{ matrix.version.attribute }}_gcc --command bash -c "cd linux && make defconfig && make -j$(nproc) bzImage"
+    strategy:
+      matrix:
+        version: [
+        { tag: v6.8, attribute: linux_6_8 },
+        { tag: v6.9-rc6, attribute: linux_6_9 }
+        ]
