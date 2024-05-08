@@ -28,7 +28,8 @@
       let
         pkgs = nixpkgs.legacyPackages."${system}";
 
-        kernelDevTools = pkgs.callPackage ./tools.nix {};
+        # A set of scripts to simplify kernel development.
+        kernelDevTools = pkgs.callPackage ./tools.nix { };
 
         linuxCommonDependencies = [
           kernelDevTools
@@ -63,62 +64,94 @@
           gitFull
         ]);
 
+        linuxLlvmDependencies = [
+          pkgs.llvmPackages.bintools
+          pkgs.llvmPackages.llvm
+          pkgs.llvmPackages.clang
+        ];
+
+        linuxGccDependencies = [
+          pkgs.gcc
+        ];
+
         rust-analyzer = fenix.packages."${system}".rust-analyzer;
 
-        rustc_1_76 = rust-overlay.packages."${system}".rust_1_76_0.override {
-          extensions = [
-            "rust-src"
-            "rustfmt"
-            "clippy"
+        linuxRustDependencies = rustVersion:
+          let
+            rustc = rust-overlay.packages."${system}"."${rustVersion}".override {
+              extensions = [
+                "rust-src"
+                "rustfmt"
+                "clippy"
+              ];
+            };
+
+            rustPlatform = pkgs.makeRustPlatform {
+              cargo = rustc;
+              rustc = rustc;
+            };
+
+            bindgenUnwrapped = pkgs.callPackage ./bindgen/0.65.1.nix {
+              inherit rustPlatform;
+            };
+
+            bindgen = pkgs.rust-bindgen.override {
+              rust-bindgen-unwrapped = bindgenUnwrapped;
+            };
+          in
+          [
+            rustc
+            bindgen
+            rust-analyzer
           ];
-        };
-
-        rust-bindgen_0_65_1 = let
-          rustPlatform_1_76 = pkgs.makeRustPlatform {
-            cargo = rustc_1_76;
-            rustc = rustc_1_76;
-          };
-
-          rust-bindgen-unwrapped_0_65_1 = pkgs.callPackage ./bindgen/0.65.1.nix {
-            rustPlatform = rustPlatform_1_76;
-          };
-        in
-          pkgs.rust-bindgen.override {
-            rust-bindgen-unwrapped = rust-bindgen-unwrapped_0_65_1;
-          };
       in
       {
-        devShells.default = self.devShells."${system}".linux_6_8;
+        devShells = {
+          default = self.devShells."${system}".linux_6_8;
 
-        devShells.linux_6_8 = pkgs.mkShell {
-          packages = [
-            pkgs.llvmPackages.bintools
-            pkgs.llvmPackages.llvm
-            pkgs.llvmPackages.clang
+          # Linux 6.8
+          linux_6_8 = pkgs.mkShell {
+            packages =
+              linuxLlvmDependencies
+              ++ (linuxRustDependencies "rust_1_74_1")
+              ++ linuxCommonDependencies;
 
-            rustc_1_76
-            rust-bindgen_0_65_1
-            rust-analyzer
-          ] ++ linuxCommonDependencies;
+            # To force LLVM build mode. This should create less problems
+            # with Rust interop.
+            LLVM = "1";
 
-          # To force LLVM build mode. This should create less problems
-          # with Rust interop.
-          LLVM = "1";
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
 
-          # Disable all automatically applied hardening. The Linux
-          # kernel will take care of itself.
-          NIX_HARDENING_ENABLE = "";
+          linux_6_8_gcc = pkgs.mkShell {
+            packages =
+              linuxGccDependencies
+              ++ linuxCommonDependencies;
+
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
+
+          # Linux 6.9
+          linux_6_9 = pkgs.mkShell {
+            packages =
+              linuxLlvmDependencies
+              ++ (linuxRustDependencies "rust_1_76_0")
+              ++ linuxCommonDependencies;
+
+            # To force LLVM build mode. This should create less problems
+            # with Rust interop.
+            LLVM = "1";
+
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
+
+          linux_6_9_gcc = self.devShells."${system}".linux_6_9_gcc;
         };
-
-        devShells.linux_6_8_gcc = pkgs.mkShell {
-          packages = [
-            pkgs.gcc
-          ] ++ linuxCommonDependencies;
-
-          # Disable all automatically applied hardening. The Linux
-          # kernel will take care of itself.
-          NIX_HARDENING_ENABLE = "";
-        };
-      }
-    );
+      });
 }
