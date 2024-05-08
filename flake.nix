@@ -151,7 +151,7 @@
             NIX_HARDENING_ENABLE = "";
           };
 
-          linux_6_9_gcc = self.devShells."${system}".linux_6_9_gcc;
+          linux_6_9_gcc = self.devShells."${system}".linux_6_8_gcc;
         };
       });
 }
