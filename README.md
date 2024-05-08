@@ -28,6 +28,7 @@ working on the Linux 6.8 kernel preinstalled.
   predictable.
 - **Version-specific environments**: Tailored development environments
   for specific Linux kernel versions, starting with Linux 6.8.
+- **Rust and LLVM-enabled**: Ready for the future of kernel development!
 
 ### Requirements
 
@@ -42,6 +43,13 @@ demand):
 
 ```shell
 $ nix develop github:blitz/kernel-dev#linux_<major_version>_<minor_version>
+```
+
+This will drop you in a shell with `clang` and `rustc` matching the
+kernel version. If you need a `gcc`-based environment, use:
+
+```shell
+$ nix develop github:blitz/kernel-dev#linux_<major_version>_<minor_version>_gcc
 ```
 
 If you don't find the exact version that you need, one that is close
