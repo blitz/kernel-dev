@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+set -e
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# When this script is used as is, SCRIPT_DIR is ok. If it's used as
+# part of kernelDevTools, we have to inject the path to the flake.
+if [ -z "$FLAKE_DIR" ]; then
+   FLAKE_DIR="$SCRIPT_DIR"
+fi
+
+gcc_flag=false
+
+# Parse command-line options
+TEMP=$(getopt -o '' --longoptions gcc -- "$@")
+eval set -- "$TEMP"
+
+# Extract options into variables
+while true; do
+    case "$1" in
+	--gcc)
+	    gcc_flag=true
+	    shift
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	*)
+	    echo "Error: Invalid option"
+	    echo "Usage: $0 [--gcc]"
+	    exit 1
+	    ;;
+    esac
+done
+
+OLDEST_VERSION=$(git tag --contains=HEAD | grep -oE 'v[0-9]+\.[0-9]+' | sort | head -n1)
+
+if [ -z "$OLDEST_VERSION" ]; then
+    tput bold
+    echo -n "Failed to recognize kernel version."
+    tput sgr0
+    echo " This could have different reasons:"
+    echo
+    echo "1. This is not a Git checkout of the Linux kernel sources. To checkout Linux, try:"
+    echo "   \$ linux-checkout linux-src"
+    echo
+    echo "2. The repository has no remote that contains the version tags. Try:"
+    echo "   \$ git remote add stable git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
+    echo "   \$ git fetch stable"
+    exit 1
+fi
+
+ATTRIBUTE="linux_$(echo "$OLDEST_VERSION" | tr -d 'v' | tr '.' '_')"
+
+if $gcc_flag; then
+    ATTRIBUTE=${ATTRIBUTE}_gcc
+fi
+
+echo -n "Entering environment "
+tput bold
+echo -n "$ATTRIBUTE"
+tput sgr0			# reset
+echo ". This might take a moment. Exit via ^D."
+
+exec nix develop "$FLAKE_DIR"\#"$ATTRIBUTE" --command "$SHELL"

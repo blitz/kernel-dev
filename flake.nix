@@ -29,7 +29,9 @@
         pkgs = nixpkgs.legacyPackages."${system}";
 
         # A set of scripts to simplify kernel development.
-        kernelDevTools = pkgs.callPackage ./tools.nix { };
+        kernelDevTools = pkgs.callPackage ./tools.nix {
+          flakeSelf = self.outPath;
+        };
 
         linuxCommonDependencies = [
           kernelDevTools
@@ -106,6 +108,12 @@
           ];
       in
       {
+        packages = {
+          default = kernelDevTools;
+
+          inherit kernelDevTools;
+        };
+
         devShells = {
           default = self.devShells."${system}".linux_6_8;
 
