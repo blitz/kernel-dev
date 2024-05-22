@@ -11,48 +11,75 @@ if [ -z "$FLAKE_DIR" ]; then
 fi
 
 gcc_flag=false
+kernel_version=""
 
-# Parse command-line options
-TEMP=$(getopt -o '' --longoptions gcc -- "$@")
+# Parse command-line options with optional positional parameter handling
+TEMP=$(getopt -o 'h:' --longoptions 'gcc,help' -n 'script_name' -- "$@")
+
 eval set -- "$TEMP"
 
-# Extract options into variables
+# Extract options
 while true; do
-    case "$1" in
-	--gcc)
-	    gcc_flag=true
-	    shift
-	    ;;
-	--)
-	    shift
-	    break
-	    ;;
-	*)
-	    echo "Error: Invalid option"
-	    echo "Usage: $0 [--gcc]"
-	    exit 1
-	    ;;
-    esac
+  case "$1" in
+    --gcc)
+      gcc_flag=true
+      shift
+      ;;
+    -h | --help)
+      echo "Usage: $0 [--gcc] [KERNEL_VERSION]"
+      exit 0
+      ;;
+    --)
+      shift
+      # Check if there's an argument after --
+      if [[ -n "$1" ]]; then
+        kernel_version="$1"
+      fi
+      break
+      ;;
+    *)
+      echo "Error: Invalid option"
+      echo "Usage: $0 [--gcc] [KERNEL_VERSION]"
+      exit 1
+      ;;
+  esac
 done
 
-OLDEST_VERSION=$(git tag --contains=HEAD | grep -oE 'v[0-9]+\.[0-9]+' | sort | head -n1)
+if [ -z "$kernel_version" ]; then
 
-if [ -z "$OLDEST_VERSION" ]; then
+    latest_release=$(git tag --contains=HEAD | grep -oE 'v[0-9]+\.[0-9]+' | sort | head -n1)
+
+    if [ -z "$latest_release" ]; then
+	tput bold
+	echo -n "Failed to automatically recognize kernel version."
+	tput sgr0
+	echo " This could have different reasons:"
+	echo
+	echo "0. This is a development version of Linux and not part of any release yet. Try manually selecting a version:"
+	echo "   \$ enter-kernel-dev v6.10"
+	echo
+	echo "1. This is not a Git checkout of the Linux kernel sources. To checkout Linux, try:"
+	echo "   \$ linux-checkout linux-src"
+	echo
+	echo "2. The repository has no remote that contains the version tags. Try:"
+	echo "   \$ git remote add stable git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
+	echo "   \$ git fetch stable"
+	exit 1
+    fi
+
+    kernel_version="$latest_release"
+fi
+
+if ! echo $kernel_version | grep -qE 'v[0-9]+\.[0-9]+'; then
     tput bold
-    echo -n "Failed to recognize kernel version."
+    echo "Invalid kernel version format: $kernel_version"
     tput sgr0
-    echo " This could have different reasons:"
     echo
-    echo "1. This is not a Git checkout of the Linux kernel sources. To checkout Linux, try:"
-    echo "   \$ linux-checkout linux-src"
-    echo
-    echo "2. The repository has no remote that contains the version tags. Try:"
-    echo "   \$ git remote add stable git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
-    echo "   \$ git fetch stable"
+    echo "Kernel versions should look like: v6.10"
     exit 1
 fi
 
-ATTRIBUTE="linux_$(echo "$OLDEST_VERSION" | tr -d 'v' | tr '.' '_')"
+ATTRIBUTE="linux_$(echo "$kernel_version" | tr -d 'v' | tr '.' '_')"
 
 if $gcc_flag; then
     ATTRIBUTE=${ATTRIBUTE}_gcc
@@ -63,5 +90,8 @@ tput bold
 echo -n "$ATTRIBUTE"
 tput sgr0			# reset
 echo ". This might take a moment. Exit via ^D."
+
+# TODO It would be nice to gracefully fail if we don't have an
+# environment for a particular kernel version yet.
 
 exec nix develop "$FLAKE_DIR"\#"$ATTRIBUTE" --command "$SHELL"
