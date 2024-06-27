@@ -117,6 +117,30 @@
         devShells = {
           default = self.devShells."${system}".linux_6_8;
 
+          # Linux 6.6
+          linux_6_6 = pkgs.mkShell {
+            packages =
+              linuxLlvmDependencies
+              ++ linuxCommonDependencies;
+
+            # To force LLVM build mode.
+            LLVM = "1";
+
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
+
+          linux_6_6_gcc = pkgs.mkShell {
+            packages =
+              linuxGccDependencies
+              ++ linuxCommonDependencies;
+
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
+
           # Linux 6.8
           linux_6_8 = pkgs.mkShell {
             packages =
@@ -133,15 +157,7 @@
             NIX_HARDENING_ENABLE = "";
           };
 
-          linux_6_8_gcc = pkgs.mkShell {
-            packages =
-              linuxGccDependencies
-              ++ linuxCommonDependencies;
-
-            # Disable all automatically applied hardening. The Linux
-            # kernel will take care of itself.
-            NIX_HARDENING_ENABLE = "";
-          };
+          linux_6_8_gcc = self.devShells."${system}".linux_6_6_gcc;
 
           # Linux 6.9
           linux_6_9 = pkgs.mkShell {
