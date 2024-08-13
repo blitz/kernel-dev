@@ -115,7 +115,7 @@
         };
 
         devShells = {
-          default = self.devShells."${system}".linux_6_8;
+          default = self.devShells."${system}".linux_6_10;
 
           # Linux 6.6
           linux_6_6 = pkgs.mkShell {
