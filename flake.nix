@@ -194,6 +194,24 @@
           };
 
           linux_6_10_gcc = self.devShells."${system}".linux_6_9_gcc;
+
+          # Linux 6.11
+          linux_6_11 = pkgs.mkShell {
+            packages =
+              linuxLlvmDependencies
+              ++ (linuxRustDependencies "rust_1_78_0")
+              ++ linuxCommonDependencies;
+
+            # To force LLVM build mode. This should create less problems
+            # with Rust interop.
+            LLVM = "1";
+
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
+
+          linux_6_11_gcc = self.devShells."${system}".linux_6_10_gcc;
         };
       });
 }
