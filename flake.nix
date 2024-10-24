@@ -67,7 +67,7 @@
 
         rust-analyzer = fenix.packages."${system}".rust-analyzer;
 
-        linuxRustDependencies = rustVersion:
+        linuxRustDependencies = { clang, rustVersion }:
           let
             rustc = rust-overlay.packages."${system}"."${rustVersion}".override {
               extensions = [
@@ -83,7 +83,7 @@
             };
 
             bindgenUnwrapped = pkgs.callPackage ./bindgen/0.65.1.nix {
-              inherit rustPlatform;
+              inherit rustPlatform clang;
             };
 
             bindgen = pkgs.rust-bindgen.override {
@@ -106,25 +106,32 @@
           NIX_HARDENING_ENABLE = "";
         };
 
-        mkClangShell = { clangVersion, rustcVersion }: pkgs.mkShell {
-          packages =
-            (with pkgs."llvmPackages_${clangVersion}";
-            [
-              bintools
-              llvm
-              clang
-            ])
-            ++ (linuxRustDependencies "rust_${rustcVersion}")
-            ++ linuxCommonDependencies;
+        mkClangShell = { clangVersion, rustcVersion }:
+          let
+            llvmPackages = pkgs."llvmPackages_${clangVersion}";
+          in
+          pkgs.mkShell {
+            packages =
+              (with llvmPackages;
+              [
+                bintools
+                llvm
+                clang
+              ])
+              ++ (linuxRustDependencies {
+                inherit (llvmPackages) clang;
+                rustVersion = "rust_${rustcVersion}";
+              })
+              ++ linuxCommonDependencies;
 
-          # To force LLVM build mode. This should create less problems
-          # with Rust interop.
-          LLVM = "1";
+            # To force LLVM build mode. This should create less problems
+            # with Rust interop.
+            LLVM = "1";
 
-          # Disable all automatically applied hardening. The Linux
-          # kernel will take care of itself.
-          NIX_HARDENING_ENABLE = "";
-        };
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
       in
       {
         packages = {
