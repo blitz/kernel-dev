@@ -65,16 +65,6 @@
           gitFull
         ]);
 
-        linuxLlvmDependencies = [
-          pkgs.llvmPackages.bintools
-          pkgs.llvmPackages.llvm
-          pkgs.llvmPackages.clang
-        ];
-
-        linuxGccDependencies = [
-          pkgs.gcc
-        ];
-
         rust-analyzer = fenix.packages."${system}".rust-analyzer;
 
         linuxRustDependencies = rustVersion:
@@ -105,6 +95,36 @@
             bindgen
             rust-analyzer
           ];
+
+        mkGccShell = { gccVersion }: pkgs.mkShell {
+          packages =
+            linuxCommonDependencies
+            ++ [ pkgs."gcc${gccVersion}" ];
+
+          # Disable all automatically applied hardening. The Linux
+          # kernel will take care of itself.
+          NIX_HARDENING_ENABLE = "";
+        };
+
+        mkClangShell = { clangVersion, rustcVersion }: pkgs.mkShell {
+          packages =
+            (with pkgs."llvmPackages_${clangVersion}";
+            [
+              bintools
+              llvm
+              clang
+            ])
+            ++ (linuxRustDependencies "rust_${rustcVersion}")
+            ++ linuxCommonDependencies;
+
+          # To force LLVM build mode. This should create less problems
+          # with Rust interop.
+          LLVM = "1";
+
+          # Disable all automatically applied hardening. The Linux
+          # kernel will take care of itself.
+          NIX_HARDENING_ENABLE = "";
+        };
       in
       {
         packages = {
@@ -117,46 +137,16 @@
           default = self.devShells."${system}".linux_6_6;
 
           # Linux 6.6
-          linux_6_6 = pkgs.mkShell {
-            packages =
-              linuxLlvmDependencies
-              ++ linuxCommonDependencies;
-
-            # To force LLVM build mode.
-            LLVM = "1";
-
-            # Disable all automatically applied hardening. The Linux
-            # kernel will take care of itself.
-            NIX_HARDENING_ENABLE = "";
-          };
-
-          linux_6_6_gcc = pkgs.mkShell {
-            packages =
-              linuxGccDependencies
-              ++ linuxCommonDependencies;
-
-            # Disable all automatically applied hardening. The Linux
-            # kernel will take care of itself.
-            NIX_HARDENING_ENABLE = "";
-          };
+          linux_6_6 = mkClangShell { clangVersion = "19"; rustcVersion = "1_78_0"; };
+          linux_6_6_gcc = mkGccShell { gccVersion = "14"; };
 
           # Linux 6.11
-          linux_6_11 = pkgs.mkShell {
-            packages =
-              linuxLlvmDependencies
-              ++ (linuxRustDependencies "rust_1_78_0")
-              ++ linuxCommonDependencies;
+          linux_6_11 = mkClangShell { clangVersion = "19"; rustcVersion = "1_78_0"; };
+          linux_6_11_gcc = mkGccShell { gccVersion = "14"; };
 
-            # To force LLVM build mode. This should create less problems
-            # with Rust interop.
-            LLVM = "1";
-
-            # Disable all automatically applied hardening. The Linux
-            # kernel will take care of itself.
-            NIX_HARDENING_ENABLE = "";
-          };
-
-          linux_6_11_gcc = self.devShells."${system}".linux_6_6_gcc;
+          # Linux 6.12
+          linux_6_12 = mkClangShell { clangVersion = "19"; rustcVersion = "1_82_0"; };
+          linux_6_12_gcc = mkGccShell { gccVersion = "14"; };
         };
       });
 }
