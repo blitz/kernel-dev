@@ -143,15 +143,12 @@
         devShells = {
           default = self.devShells."${system}".linux_6_6;
 
-          # Linux 6.6
           linux_6_6 = mkClangShell { clangVersion = "19"; rustcVersion = "1_78_0"; };
           linux_6_6_gcc = mkGccShell { gccVersion = "14"; };
 
-          # Linux 6.11
           linux_6_11 = mkClangShell { clangVersion = "19"; rustcVersion = "1_78_0"; };
           linux_6_11_gcc = mkGccShell { gccVersion = "14"; };
 
-          # Linux 6.12
           linux_6_12 = mkClangShell { clangVersion = "19"; rustcVersion = "1_82_0"; };
           linux_6_12_gcc = mkGccShell { gccVersion = "14"; };
         };
