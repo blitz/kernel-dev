@@ -114,7 +114,7 @@
         };
 
         devShells = {
-          default = self.devShells."${system}".linux_6_10;
+          default = self.devShells."${system}".linux_6_6;
 
           # Linux 6.6
           linux_6_6 = pkgs.mkShell {
@@ -140,60 +140,6 @@
             NIX_HARDENING_ENABLE = "";
           };
 
-          # Linux 6.8
-          linux_6_8 = pkgs.mkShell {
-            packages =
-              linuxLlvmDependencies
-              ++ (linuxRustDependencies "rust_1_74_1")
-              ++ linuxCommonDependencies;
-
-            # To force LLVM build mode. This should create less problems
-            # with Rust interop.
-            LLVM = "1";
-
-            # Disable all automatically applied hardening. The Linux
-            # kernel will take care of itself.
-            NIX_HARDENING_ENABLE = "";
-          };
-
-          linux_6_8_gcc = self.devShells."${system}".linux_6_6_gcc;
-
-          # Linux 6.9
-          linux_6_9 = pkgs.mkShell {
-            packages =
-              linuxLlvmDependencies
-              ++ (linuxRustDependencies "rust_1_76_0")
-              ++ linuxCommonDependencies;
-
-            # To force LLVM build mode. This should create less problems
-            # with Rust interop.
-            LLVM = "1";
-
-            # Disable all automatically applied hardening. The Linux
-            # kernel will take care of itself.
-            NIX_HARDENING_ENABLE = "";
-          };
-
-          linux_6_9_gcc = self.devShells."${system}".linux_6_8_gcc;
-
-          # Linux 6.10
-          linux_6_10 = pkgs.mkShell {
-            packages =
-              linuxLlvmDependencies
-              ++ (linuxRustDependencies "rust_1_78_0")
-              ++ linuxCommonDependencies;
-
-            # To force LLVM build mode. This should create less problems
-            # with Rust interop.
-            LLVM = "1";
-
-            # Disable all automatically applied hardening. The Linux
-            # kernel will take care of itself.
-            NIX_HARDENING_ENABLE = "";
-          };
-
-          linux_6_10_gcc = self.devShells."${system}".linux_6_9_gcc;
-
           # Linux 6.11
           linux_6_11 = pkgs.mkShell {
             packages =
@@ -210,7 +156,7 @@
             NIX_HARDENING_ENABLE = "";
           };
 
-          linux_6_11_gcc = self.devShells."${system}".linux_6_10_gcc;
+          linux_6_11_gcc = self.devShells."${system}".linux_6_6_gcc;
         };
       });
 }
