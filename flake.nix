@@ -38,7 +38,7 @@
 
         # A set of scripts to simplify kernel development.
         kernelDevTools = pkgs.callPackage ./tools.nix {
-          flakeSelf = self.outPath;
+          flakeSelf = self;
         };
 
         linuxCommonDependencies =
