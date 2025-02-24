@@ -152,7 +152,7 @@
         };
 
         devShells = {
-          default = self.devShells."${system}".linux_6_6;
+          default = self.devShells."${system}".linux_6_12;
 
           linux_6_6 = mkClangShell {
             clangVersion = "19";

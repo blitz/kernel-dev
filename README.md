@@ -9,15 +9,16 @@ and bindgen, preinstalled in a devShell.
 ## Quick Start
 
 Getting started with your kernel development environment is incredibly
-simple. If you're aiming to develop for Linux version 6.8, all you
+simple. If you're aiming to develop for Linux version 6.12, all you
 need is a single command:
 
 ```shell
-linux$ nix develop github:blitz/kernel-dev#linux_6_8
+linux$ nix develop github:blitz/kernel-dev#linux_6_12
 ```
 
 This will drop you into a shell with all the dependencies required for
-working on the Linux 6.8 kernel preinstalled.
+working on the Linux 6.12 kernel preinstalled. Check the `devShells` attribute
+in `flake.nix` to find all available shells.
 
 ### Features
 
