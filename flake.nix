@@ -22,8 +22,17 @@
     };
   };
 
-  outputs = { self, nixpkgs, rust-overlay, fenix, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      rust-overlay,
+      fenix,
+      flake-utils,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages."${system}";
 
@@ -32,42 +41,45 @@
           flakeSelf = self.outPath;
         };
 
-        linuxCommonDependencies = [
-          kernelDevTools
-        ] ++ (with pkgs; [
-          bc
-          bison
-          cpio
-          elfutils
-          flex
-          gmp
-          gnumake
-          kmod
-          libmpc
-          mpfr
-          nettools
-          openssl
-          pahole
-          perl
-          python3Minimal
-          rsync
-          ubootTools
-          zlib
-          zstd
+        linuxCommonDependencies =
+          [
+            kernelDevTools
+          ]
+          ++ (with pkgs; [
+            bc
+            bison
+            cpio
+            elfutils
+            flex
+            gmp
+            gnumake
+            kmod
+            libmpc
+            mpfr
+            nettools
+            openssl
+            pahole
+            perl
+            python3Minimal
+            rsync
+            ubootTools
+            zlib
+            zstd
 
-          # For make menuconfig
-          ncurses
+            # For make menuconfig
+            ncurses
 
-          # For make gtags
-          global
+            # For make gtags
+            global
 
-          # For git send-email 🫠
-          gitFull
-        ]);
+            # For git send-email 🫠
+            gitFull
+          ]);
 
         rust-analyzer = fenix.packages."${system}".rust-analyzer;
 
-        linuxRustDependencies = { clang, rustVersion }:
+        linuxRustDependencies =
+          { clang, rustVersion }:
           let
             rustc = rust-overlay.packages."${system}"."${rustVersion}".override {
               extensions = [
@@ -96,24 +108,24 @@
             rustc
           ];
 
-        mkGccShell = { gccVersion }: pkgs.mkShell {
-          packages =
-            linuxCommonDependencies
-            ++ [ pkgs."gcc${gccVersion}" ];
+        mkGccShell =
+          { gccVersion }:
+          pkgs.mkShell {
+            packages = linuxCommonDependencies ++ [ pkgs."gcc${gccVersion}" ];
 
-          # Disable all automatically applied hardening. The Linux
-          # kernel will take care of itself.
-          NIX_HARDENING_ENABLE = "";
-        };
+            # Disable all automatically applied hardening. The Linux
+            # kernel will take care of itself.
+            NIX_HARDENING_ENABLE = "";
+          };
 
-        mkClangShell = { clangVersion, rustcVersion }:
+        mkClangShell =
+          { clangVersion, rustcVersion }:
           let
             llvmPackages = pkgs."llvmPackages_${clangVersion}";
           in
           pkgs.mkShell {
             packages =
-              (with llvmPackages;
-              [
+              (with llvmPackages; [
                 bintools
                 clang
                 llvm
@@ -135,22 +147,33 @@
       in
       {
         packages = {
-          default = kernelDevTools;
-
           inherit kernelDevTools;
+          default = kernelDevTools;
         };
 
         devShells = {
           default = self.devShells."${system}".linux_6_6;
 
-          linux_6_6 = mkClangShell { clangVersion = "19"; rustcVersion = "1_78_0"; };
+          linux_6_6 = mkClangShell {
+            clangVersion = "19";
+            rustcVersion = "1_78_0";
+          };
           linux_6_6_gcc = mkGccShell { gccVersion = "14"; };
 
-          linux_6_11 = mkClangShell { clangVersion = "19"; rustcVersion = "1_78_0"; };
+          linux_6_11 = mkClangShell {
+            clangVersion = "19";
+            rustcVersion = "1_78_0";
+          };
           linux_6_11_gcc = mkGccShell { gccVersion = "14"; };
 
-          linux_6_12 = mkClangShell { clangVersion = "19"; rustcVersion = "1_82_0"; };
+          linux_6_12 = mkClangShell {
+            clangVersion = "19";
+            rustcVersion = "1_82_0";
+          };
           linux_6_12_gcc = mkGccShell { gccVersion = "14"; };
         };
-      });
+
+        formatter = pkgs.nixfmt-rfc-style;
+      }
+    );
 }
