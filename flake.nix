@@ -35,25 +35,25 @@
         linuxCommonDependencies = [
           kernelDevTools
         ] ++ (with pkgs; [
-          gnumake
-          perl
-          bison
-          flex
-          gmp
-          libmpc
-          mpfr
-          pahole
-          nettools
           bc
-          rsync
-          openssl
+          bison
           cpio
           elfutils
-          zstd
-          python3Minimal
-          zlib
+          flex
+          gmp
+          gnumake
           kmod
+          libmpc
+          mpfr
+          nettools
+          openssl
+          pahole
+          perl
+          python3Minimal
+          rsync
           ubootTools
+          zlib
+          zstd
 
           # For make menuconfig
           ncurses
@@ -91,9 +91,9 @@
             };
           in
           [
-            rustc
             bindgen
             rust-analyzer
+            rustc
           ];
 
         mkGccShell = { gccVersion }: pkgs.mkShell {
@@ -115,8 +115,8 @@
               (with llvmPackages;
               [
                 bintools
-                llvm
                 clang
+                llvm
               ])
               ++ (linuxRustDependencies {
                 inherit (llvmPackages) clang;
