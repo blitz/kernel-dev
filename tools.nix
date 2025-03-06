@@ -1,4 +1,9 @@
-{ stdenvNoCC, makeWrapper, flakeSelf }:
+{
+  stdenvNoCC,
+  makeWrapper,
+  flakeSelf,
+}:
+
 stdenvNoCC.mkDerivation {
   name = "kernel-dev-tools";
 
